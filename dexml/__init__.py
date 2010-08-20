@@ -170,8 +170,8 @@ class ModelMetaclass(type):
             return cls
         #  Set up the cls.meta object, inheriting from base classes
         meta_attrs = {}
-        for base in bases:
-            if isinstance(base,ModelMetaclass) and hasattr(base,"meta"):
+        for base in parents:
+            if hasattr(base,"meta"):
                 meta_attrs.update(_meta_attributes(base.meta))
         meta_attrs.pop("tagname",None)
         meta_attrs.update(_meta_attributes(attrs.get("meta",None)))
@@ -180,9 +180,7 @@ class ModelMetaclass(type):
         #  name and containing class.  Inherit fields from base classes
         #  only if not overridden on the class itself.
         base_fields = {}
-        for base in bases:
-            if not isinstance(base,ModelMetaclass):
-                continue
+        for base in parents:
             for field in base._fields:
                 if field.field_name not in base_fields:
                     field = copy.copy(field)
