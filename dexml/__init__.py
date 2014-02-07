@@ -408,10 +408,13 @@ class Model(object):
                 data.append('<?xml version="1.0" ?>')
         data.extend(self._render(nsmap))
         xml = "".join(data)
-        if pretty:
-            xml = minidom.parseString(xml).toprettyxml()
-        if encoding:
-            xml = xml.encode(encoding)
+        if pretty and encoding:
+            xml = minidom.parseString(xml).toprettyxml(encoding=encoding)
+        else:
+            if pretty:
+                xml = minidom.parseString(xml).toprettyxml()
+            if encoding:
+                xml = xml.encode(encoding)
         return xml
 
     def irender(self,encoding=None,fragment=False,nsmap=None):
