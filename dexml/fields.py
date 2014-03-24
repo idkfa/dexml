@@ -774,6 +774,7 @@ class Choice(Field):
 
     class arguments(Field.arguments):
         fields = []
+        tagname = None
 
     def __init__(self,*fields,**kwds):
         real_fields = []
@@ -786,8 +787,19 @@ class Choice(Field):
                 raise ValueError("only Model fields are allowed within a Choice field")
         kwds["fields"] = real_fields
         super(Choice,self).__init__(**kwds)
+        if self.tagname:
+            self.__tagname_parsed = False
 
     def parse_child_node(self,obj,node):
+        if self.tagname:
+            if not self.__tagname_parsed:
+                if node.nodeType != node.ELEMENT_NODE:
+                    return dexml.PARSE_SKIP
+                elif node.tagName == self.tagname:
+                    self.__tagname_parsed = True
+                    return dexml.PARSE_CHILDREN
+                else:
+                    return dexml.PARSE_SKIP
         for field in self.fields:
             field.field_name = self.field_name
             field.model_class = self.model_class
@@ -795,6 +807,8 @@ class Choice(Field):
             if res is dexml.PARSE_MORE:
                 raise ValueError("items in a Choice cannot return PARSE_MORE")
             if res is dexml.PARSE_DONE:
+                if self.tagname:
+                    self.__tagname_parsed = False
                 return dexml.PARSE_DONE
         else:
             return dexml.PARSE_SKIP
@@ -804,8 +818,12 @@ class Choice(Field):
             if self.required:
                 raise dexml.RenderError("Field '%s': required field is missing" % (self.field_name,))
         else:
+            if self.tagname:
+                yield  "<%s>" % (self.tagname,)
             for data in item._render(nsmap=nsmap):
                 yield data
+            if self.tagname:
+                yield  "</%s>" % (self.tagname,)
 
 
 class XmlNode(Field):
